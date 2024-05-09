@@ -9,11 +9,7 @@ defmodule KinoProxy.MixProject do
       version: @version,
       name: "KinoProxy",
       elixir: "~> 1.16",
-      preferred_cli_env: [
-        "test.all": :test,
-        docs: :docs,
-        "hex.publish": :docs
-      ],
+      preferred_cli_env: preferred_cli_env(),
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       docs: docs(),
@@ -31,10 +27,18 @@ defmodule KinoProxy.MixProject do
   defp elixirc_paths(:test), do: ["lib", "test/support"]
   defp elixirc_paths(_), do: ["lib"]
 
+  defp preferred_cli_env do
+    [
+      docs: :docs,
+      "hex.publish": :docs
+    ]
+  end
+
   defp deps do
     [
-      {:plug, "~> 1.15.3"},
-      {:kino, "~> 0.12.3"},
+      {:plug, "~> 1.15.3", only: :test},
+      {:bandit, "~> 1.5", only: :test},
+      {:req, "~> 0.4.14", only: :test}
     ]
   end
 
