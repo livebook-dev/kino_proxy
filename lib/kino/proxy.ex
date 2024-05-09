@@ -1,43 +1,14 @@
 defmodule Kino.Proxy do
-  use GenServer
+  # TODO: Add module docs
+  @moduledoc false
 
-  @name __MODULE__
+  # TODO: Add function docs
+  @doc false
+  @spec run(pid(), Plug.Conn.t()) :: pid()
+  defdelegate run(pid, conn), to: KinoProxy.Server
 
-  def start_link(opts \\ []) do
-    GenServer.start_link(__MODULE__, opts, name: @name)
-  end
-
-  def request(%Plug.Conn{} = conn) do
-    GenServer.call(@name, {:request, conn, self()})
-  end
-
-  def listen(fun) when is_function(fun, 1) do
-    GenServer.cast(@name, {:listen, fun})
-  end
-
-  # GenServer callbacks
-
-  @impl true
-  def init(_opts) do
-    {:ok, %{fun: nil}}
-  end
-
-  @impl true
-  def handle_call({:request, conn, pid}, from, state) do
-    pid =
-      spawn(fn ->
-        Process.link(pid)
-        conn = put_in(conn.adapter, {KinoProxy.Adapter, pid})
-        state.fun.(conn)
-
-        GenServer.reply(from, :ok)
-      end)
-
-    {:reply, pid, state}
-  end
-
-  @impl true
-  def handle_cast({:listen, fun}, state) do
-    {:noreply, %{state | fun: fun}}
-  end
+  # TODO: Add function docs
+  @doc false
+  @spec listen((Plug.Conn.t() -> Plug.Conn.t())) :: :ok
+  defdelegate listen(fun), to: KinoProxy.Client
 end
