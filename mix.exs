@@ -18,7 +18,6 @@ defmodule KinoProxy.MixProject do
       start_permanent: Mix.env() == :prod,
       docs: docs(),
       deps: deps(),
-      aliases: aliases(),
       package: package()
     ]
   end
@@ -36,23 +35,7 @@ defmodule KinoProxy.MixProject do
     [
       {:plug, "~> 1.15.3"},
       {:kino, "~> 0.12.3"},
-      {:livebook, livebook_opts()}
     ]
-  end
-
-  @default_livebook_path Path.expand("../livebook")
-  @livebook_path_env "LIVEBOOK_PATH"
-
-  defp livebook_opts do
-    cond do
-      File.exists?(@default_livebook_path) -> [path: @default_livebook_path, only: :test]
-      path = System.get_env(@livebook_path_env) -> [path: path, only: :test]
-      :else -> [github: "livebook-dev/livebook", only: :test]
-    end
-  end
-
-  def aliases do
-    ["test.all": ["test --include integration"]]
   end
 
   defp docs do
