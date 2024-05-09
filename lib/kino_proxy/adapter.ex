@@ -1,5 +1,4 @@
 defmodule KinoProxy.Adapter do
-  # TODO: Add module description
   @moduledoc false
   @behaviour Plug.Conn.Adapter
 
@@ -7,8 +6,6 @@ defmodule KinoProxy.Adapter do
     ref = make_ref()
     send(pid, {:send_resp, self(), ref, [status, headers, body]})
 
-    receive do
-      {^ref, resp} -> resp
-    end
+    receive(do: ({^ref, response} -> response))
   end
 end
