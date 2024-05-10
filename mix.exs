@@ -36,7 +36,7 @@ defmodule KinoProxy.MixProject do
 
   defp deps do
     [
-      {:plug, "~> 1.15.3", only: :test},
+      {:plug, "~> 1.15.3"},
       {:bandit, "~> 1.5", only: :test},
       {:req, "~> 0.4.14", only: :test}
     ]
