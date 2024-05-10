@@ -19,12 +19,16 @@ defmodule KinoProxy.Endpoint do
     signing_salt: "deadbook"
 
   plug :fetch_session
-  plug KinoProxy.Plug
-
   plug :dispatch
 
   match "/:id/proxy/*path" do
-    conn
+    if pid = GenServer.whereis(Kino.Proxy) do
+      {conn, _reason} = Kino.Proxy.run(pid, conn)
+      conn
+    else
+      json = Jason.encode!(%{error: %{details: "Not Found"}})
+      Plug.Conn.send_resp(conn, 404, json)
+    end
   end
 
   def fetch_query_string(conn, _opts) do

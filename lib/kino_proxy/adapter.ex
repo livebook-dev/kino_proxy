@@ -3,7 +3,7 @@ defmodule KinoProxy.Adapter do
   @behaviour Plug.Conn.Adapter
 
   def send_resp({pid, ref}, status, headers, body) do
-    send(pid, {:send_resp, self(), ref, [status, headers, body]})
+    send(pid, {:send_resp, self(), ref, status, headers, body})
 
     receive do
       {^ref, :ok} -> {:ok, body, {pid, ref}}

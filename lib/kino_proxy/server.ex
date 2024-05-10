@@ -7,7 +7,6 @@ defmodule KinoProxy.Server do
   def run(pid, %Plug.Conn{params: %{"path" => path_info}} = conn) when is_pid(pid) do
     # TODO: We don't want to pass the whole connection
     # but only certain fields, and then rebuild it on the client
-    {mod, state} = conn.adapter
     %{plug_session: session_data} = conn.private
     request_path = "/" <> Enum.join(path_info, "/")
     private = %{plug_session: session_data}
@@ -23,20 +22,21 @@ defmodule KinoProxy.Server do
         private: private
     }
 
+    %{adapter: {mod, state}} = conn
     spawn_pid = GenServer.call(pid, {:request, conn, self()})
     monitor_ref = Process.monitor(spawn_pid)
-    loop(spawn_pid, monitor_ref, mod, state)
+    loop(spawn_pid, monitor_ref, conn)
   end
 
-  defp loop(spawn_pid, monitor_ref, mod, state) do
+  defp loop(spawn_pid, monitor_ref, conn) do
     receive do
-      {:send_resp, pid, ref, args} ->
-        {:ok, _body, state} = apply(mod, :send_resp, [state | args])
+      {:send_resp, pid, ref, status, headers, body} ->
+        conn = Plug.Conn.send_resp(%{conn | resp_headers: headers}, status, body)
         send(pid, {ref, :ok})
-        loop(spawn_pid, monitor_ref, mod, state)
+        loop(spawn_pid, monitor_ref, conn)
 
       {:DOWN, ^monitor_ref, :process, _, reason} ->
-        reason
+        {conn, reason}
     end
   end
 end
