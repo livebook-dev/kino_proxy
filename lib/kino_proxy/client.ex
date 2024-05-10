@@ -31,7 +31,8 @@ defmodule KinoProxy.Client do
     pid =
       spawn(fn ->
         Process.link(pid)
-        conn = put_in(conn.adapter, {KinoProxy.Adapter, pid})
+        ref = Process.monitor(pid)
+        conn = put_in(conn.adapter, {KinoProxy.Adapter, {pid, ref}})
         state.fun.(conn)
       end)
 
