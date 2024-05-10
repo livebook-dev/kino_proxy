@@ -9,16 +9,11 @@ defmodule KinoProxy.MixProject do
       version: @version,
       name: "KinoProxy",
       elixir: "~> 1.16",
-      preferred_cli_env: [
-        "test.all": :test,
-        docs: :docs,
-        "hex.publish": :docs
-      ],
+      preferred_cli_env: preferred_cli_env(),
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       docs: docs(),
       deps: deps(),
-      aliases: aliases(),
       package: package()
     ]
   end
@@ -32,27 +27,19 @@ defmodule KinoProxy.MixProject do
   defp elixirc_paths(:test), do: ["lib", "test/support"]
   defp elixirc_paths(_), do: ["lib"]
 
-  defp deps do
+  defp preferred_cli_env do
     [
-      {:plug, "~> 1.15.3"},
-      {:kino, "~> 0.12.3"},
-      {:livebook, livebook_opts()}
+      docs: :docs,
+      "hex.publish": :docs
     ]
   end
 
-  @default_livebook_path Path.expand("../livebook")
-  @livebook_path_env "LIVEBOOK_PATH"
-
-  defp livebook_opts do
-    cond do
-      File.exists?(@default_livebook_path) -> [path: @default_livebook_path, only: :test]
-      path = System.get_env(@livebook_path_env) -> [path: path, only: :test]
-      :else -> [github: "livebook-dev/livebook", only: :test]
-    end
-  end
-
-  def aliases do
-    ["test.all": ["test --include integration"]]
+  defp deps do
+    [
+      {:plug, "~> 1.15.3"},
+      {:bandit, "~> 1.5", only: :test},
+      {:req, "~> 0.4.14", only: :test}
+    ]
   end
 
   defp docs do
