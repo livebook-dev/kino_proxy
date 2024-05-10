@@ -21,16 +21,20 @@ defmodule KinoProxy.Server do
         private: private
     }
 
-    GenServer.call(pid, {:request, conn, self()})
-    loop(mod, state)
+    spawn_pid = GenServer.call(pid, {:request, conn, self()})
+    monitor_ref = Process.monitor(spawn_pid)
+    loop(spawn_pid, monitor_ref, mod, state)
   end
 
-  defp loop(mod, state) do
+  defp loop(spawn_pid, monitor_ref, mod, state) do
     receive do
       {:send_resp, pid, ref, args} ->
         {:ok, body, state} = apply(mod, :send_resp, [state | args])
         send(pid, {ref, {:ok, body, self()}})
-        loop(mod, state)
+        loop(spawn_pid, monitor_ref, mod, state)
+
+      {:DOWN, ^monitor_ref, :process, ^spawn_pid, _} ->
+        loop(spawn_pid, monitor_ref, mod, state)
     end
   end
 end

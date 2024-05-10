@@ -27,14 +27,12 @@ defmodule KinoProxy.Client do
   end
 
   @impl true
-  def handle_call({:request, conn, pid}, from, state) do
+  def handle_call({:request, conn, pid}, _from, state) do
     pid =
       spawn(fn ->
         Process.link(pid)
         conn = put_in(conn.adapter, {KinoProxy.Adapter, pid})
         state.fun.(conn)
-
-        GenServer.reply(from, :ok)
       end)
 
     {:reply, pid, state}
