@@ -55,6 +55,21 @@ defmodule KinoProxy.Server do
         send(pid, {ref, message})
         loop(monitor_ref, conn)
 
+      {:send_chunked, pid, ref, status, headers} ->
+        conn = send_chunked(%{conn | resp_headers: headers}, status)
+        send(pid, {ref, :ok})
+        loop(monitor_ref, conn)
+
+      {:chunk, pid, ref, chunk} ->
+        {message, conn} =
+          case chunk(conn, chunk) do
+            {:error, _} = error -> {error, conn}
+            result -> result
+          end
+
+        send(pid, {ref, message})
+        loop(monitor_ref, conn)
+
       {:DOWN, ^monitor_ref, :process, _pid, reason} ->
         {conn, reason}
     end

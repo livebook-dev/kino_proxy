@@ -40,6 +40,25 @@ defmodule KinoProxy.Adapter do
     end
   end
 
+  def send_chunked({pid, ref}, status, headers) do
+    send(pid, {:send_chunked, self(), ref, status, headers})
+
+    receive do
+      {^ref, :ok} -> {:ok, nil, {pid, ref}}
+      {:DOWN, ^ref, _, _, reason} -> exit_fun(:send_chunked, 3, reason)
+    end
+  end
+
+  def chunk({pid, ref}, chunk) do
+    send(pid, {:chunk, self(), ref, chunk})
+
+    receive do
+      {^ref, :ok} -> :ok
+      {^ref, {:error, _} = error} -> error
+      {:DOWN, ^ref, _, _, reason} -> exit_fun(:chunk, 2, reason)
+    end
+  end
+
   defp exit_fun(fun, arity, reason) do
     exit({{__MODULE__, fun, arity}, reason})
   end

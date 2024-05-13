@@ -83,6 +83,19 @@ defmodule Kino.ProxyTest do
     assert_receive {_ref, {200, _headers, ^body}}
   end
 
+  test "sends chunked response" do
+    Kino.Proxy.listen(fn conn ->
+      conn
+      |> send_chunked(200)
+      |> chunk("ABC")
+    end)
+
+    conn = conn(:get, "/123/proxy/")
+    run_endpoint(conn)
+
+    assert_receive {_ref, {200, _headers, "it works!"}}
+  end
+
   defp run_endpoint(conn, opts \\ []) do
     KinoProxy.Endpoint.call(conn, opts)
   end
