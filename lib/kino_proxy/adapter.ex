@@ -7,7 +7,29 @@ defmodule KinoProxy.Adapter do
 
     receive do
       {^ref, :ok} -> {:ok, body, {pid, ref}}
-      {:DOWN, ^ref, _, _, reason} -> exit({{__MODULE__, :send_resp, 4}, reason})
+      {:DOWN, ^ref, _, _, reason} -> exit_fun(:send_resp, 4, reason)
     end
+  end
+
+  def get_peer_data({pid, ref}) do
+    send(pid, {:get_peer_data, self(), ref})
+
+    receive do
+      {^ref, peer_data} -> peer_data
+      {:DOWN, ^ref, _, _, reason} -> exit_fun(:get_peer_data, 1, reason)
+    end
+  end
+
+  def get_http_protocol({pid, ref}) do
+    send(pid, {:get_http_protocol, self(), ref})
+
+    receive do
+      {^ref, http_protocol} -> http_protocol
+      {:DOWN, ^ref, _, _, reason} -> exit_fun(:get_http_protocol, 1, reason)
+    end
+  end
+
+  defp exit_fun(fun, arity, reason) do
+    exit({{__MODULE__, fun, arity}, reason})
   end
 end

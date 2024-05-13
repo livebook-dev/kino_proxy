@@ -2,6 +2,8 @@ defmodule KinoProxy.Server do
   # TODO: Add doc comments
   @moduledoc false
 
+  import Plug.Conn
+
   @proxy_params ["id", "path"]
 
   def run(pid, %Plug.Conn{params: %{"path" => path_info}} = conn) when is_pid(pid) do
@@ -30,8 +32,16 @@ defmodule KinoProxy.Server do
   defp loop(monitor_ref, conn) do
     receive do
       {:send_resp, pid, ref, status, headers, body} ->
-        conn = Plug.Conn.send_resp(%{conn | resp_headers: headers}, status, body)
+        conn = send_resp(%{conn | resp_headers: headers}, status, body)
         send(pid, {ref, :ok})
+        loop(monitor_ref, conn)
+
+      {:get_peer_data, pid, ref} ->
+        send(pid, {ref, get_peer_data(conn)})
+        loop(monitor_ref, conn)
+
+      {:get_http_protocol, pid, ref} ->
+        send(pid, {ref, get_http_protocol(conn)})
         loop(monitor_ref, conn)
 
       {:DOWN, ^monitor_ref, :process, _pid, reason} ->
