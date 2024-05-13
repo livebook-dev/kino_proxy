@@ -1,32 +1,25 @@
 defmodule Kino.ProxyTest do
   use ExUnit.Case, async: true
+  use Plug.Test
 
-  setup do
-    pid = start_supervised!({Bandit, plug: KinoProxy.Endpoint, scheme: :http, port: 0})
-    {:ok, {_address, port}} = ThousandIsland.listener_info(pid)
-    req = Req.new(base_url: "http://localhost:#{port}", retry: false)
-
-    {:ok, req: req}
-  end
-
-  test "it works", %{req: req} do
+  test "returns the user-defined response" do
     Kino.Proxy.listen(fn conn ->
-      # For test assertive purposes
-      assert Plug.Conn.get_req_header(conn, "x-auth-token") == ["foo-bar"]
+      assert get_req_header(conn, "x-auth-token") == ["foo-bar"]
       assert conn.request_path == "/foo/bar"
 
       conn
-      |> Plug.Conn.put_resp_header("content-type", "text/plain")
-      |> Plug.Conn.send_resp(200, "it works!")
+      |> put_resp_header("content-type", "text/plain")
+      |> send_resp(200, "it works!")
     end)
 
-    response =
-      Req.get!(req,
-        url: "/123/proxy/foo/bar",
-        headers: [{"x-auth-token", "foo-bar"}]
-      )
+    conn(:get, "/123/proxy/foo/bar")
+    |> put_req_header("x-auth-token", "foo-bar")
+    |> run_endpoint()
 
-    assert response.status == 200
-    assert response.body == "it works!"
+    assert_receive {_ref, {200, _headers, "it works!"}}
+  end
+
+  defp run_endpoint(conn, opts \\ []) do
+    KinoProxy.Endpoint.call(conn, opts)
   end
 end
