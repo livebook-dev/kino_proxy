@@ -29,6 +29,17 @@ defmodule KinoProxy.Adapter do
     end
   end
 
+  def read_req_body({pid, ref}, opts) do
+    send(pid, {:read_req_body, self(), ref, opts})
+
+    receive do
+      {^ref, {:ok, data}} -> {:ok, data, {pid, ref}}
+      {^ref, {:more, data}} -> {:more, data, {pid, ref}}
+      {^ref, {:error, _} = error} -> error
+      {:DOWN, ^ref, _, _, reason} -> exit_fun(:read_req_body, 2, reason)
+    end
+  end
+
   defp exit_fun(fun, arity, reason) do
     exit({{__MODULE__, fun, arity}, reason})
   end

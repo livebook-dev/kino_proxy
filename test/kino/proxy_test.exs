@@ -48,6 +48,41 @@ defmodule Kino.ProxyTest do
     assert_receive {_ref, {200, _headers, "it works!"}}
   end
 
+  test "reads the body" do
+    body = :crypto.strong_rand_bytes(20 * 1024 * 1024)
+
+    Kino.Proxy.listen(fn conn ->
+      stream =
+        Stream.resource(
+          fn -> {conn, 0} end,
+          fn
+            {:halt, acc} ->
+              {:halt, acc}
+
+            {conn, count} ->
+              case read_body(conn) do
+                {:ok, body, conn} ->
+                  count = count + byte_size(body)
+                  {[body], {:halt, {conn, count}}}
+
+                {:more, body, conn} ->
+                  count = count + byte_size(body)
+                  {[body], {conn, count}}
+              end
+          end,
+          fn {result, _count} -> result end
+        )
+
+      assert Enum.join(stream) == body
+      send_resp(conn, 200, body)
+    end)
+
+    conn = conn(:get, "/123/proxy/", body)
+    run_endpoint(conn)
+
+    assert_receive {_ref, {200, _headers, ^body}}
+  end
+
   defp run_endpoint(conn, opts \\ []) do
     KinoProxy.Endpoint.call(conn, opts)
   end

@@ -44,6 +44,17 @@ defmodule KinoProxy.Server do
         send(pid, {ref, get_http_protocol(conn)})
         loop(monitor_ref, conn)
 
+      {:read_req_body, pid, ref, opts} ->
+        {message, conn} =
+          case read_body(conn, opts) do
+            {:ok, data, conn} -> {{:ok, data}, conn}
+            {:more, data, conn} -> {{:more, data}, conn}
+            {:error, _} = error -> {error, conn}
+          end
+
+        send(pid, {ref, message})
+        loop(monitor_ref, conn)
+
       {:DOWN, ^monitor_ref, :process, _pid, reason} ->
         {conn, reason}
     end
