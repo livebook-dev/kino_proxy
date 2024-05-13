@@ -96,6 +96,17 @@ defmodule Kino.ProxyTest do
     assert_receive {_ref, {200, _headers, "it works!"}}
   end
 
+  test "upgrades with supported http protocol" do
+    Kino.Proxy.listen(fn conn ->
+      upgrade_adapter(conn, :"HTTP/2.0", [])
+    end)
+
+    conn = conn(:get, "/123/proxy/")
+    run_endpoint(conn)
+
+    assert_receive {_ref, :upgrade, {:"HTTP/2.0", []}}
+  end
+
   defp run_endpoint(conn, opts \\ []) do
     KinoProxy.Endpoint.call(conn, opts)
   end

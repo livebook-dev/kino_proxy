@@ -59,6 +59,17 @@ defmodule KinoProxy.Adapter do
     end
   end
 
+  def upgrade({pid, ref}, protocol, opts) do
+    send(pid, {:upgrade, self(), ref, protocol, opts})
+
+    receive do
+      {^ref, :ok} -> {:ok, {pid, ref}}
+      {:DOWN, ^ref, _, _, reason} -> exit_fun(:upgrade, 3, reason)
+    end
+  end
+
+  def push(_adapter, _path, _headers), do: {:error, :not_supported}
+
   defp exit_fun(fun, arity, reason) do
     exit({{__MODULE__, fun, arity}, reason})
   end
