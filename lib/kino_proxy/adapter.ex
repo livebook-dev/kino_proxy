@@ -77,6 +77,15 @@ defmodule KinoProxy.Adapter do
     end
   end
 
+  def send_file({pid, ref}, status, headers, file, offset, length) do
+    send(pid, {:send_file, self(), ref, status, headers, file, offset, length})
+
+    receive do
+      {^ref, :ok} -> {:ok, nil, {pid, ref}}
+      {:DOWN, ^ref, _, _, reason} -> exit_fun(:send_file, 6, reason)
+    end
+  end
+
   def push(_adapter, _path, _headers), do: {:error, :not_supported}
 
   defp exit_fun(fun, arity, reason) do

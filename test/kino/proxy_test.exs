@@ -113,6 +113,18 @@ defmodule Kino.ProxyTest do
     assert %{resp_body: "it works!", status: 200} = run_endpoint(conn)
   end
 
+  test "sends a response with a file to be downloaded" do
+    file = __ENV__.file
+    body = File.read!(file)
+
+    Kino.Proxy.listen(fn conn ->
+      send_file(conn, 200, file)
+    end)
+
+    conn = conn(:get, "/123/proxy/")
+    assert %{resp_body: ^body, status: 200} = run_endpoint(conn)
+  end
+
   defp run_endpoint(conn, opts \\ []) do
     KinoProxy.Endpoint.call(conn, opts)
   end

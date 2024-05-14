@@ -80,6 +80,11 @@ defmodule KinoProxy.Server do
         send(pid, {ref, :ok})
         loop(monitor_ref, conn)
 
+      {:send_file, pid, ref, status, headers, file, offset, length} ->
+        conn = send_file(%{conn | resp_headers: headers}, status, file, offset, length)
+        send(pid, {ref, :ok})
+        loop(monitor_ref, conn)
+
       {:DOWN, ^monitor_ref, :process, _pid, reason} ->
         {conn, reason}
     end
