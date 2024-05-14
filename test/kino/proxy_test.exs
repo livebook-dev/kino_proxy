@@ -80,15 +80,21 @@ defmodule Kino.ProxyTest do
 
   test "sends chunked response" do
     chunk = :crypto.strong_rand_bytes(10 * 1024 * 1024)
+    other_chunk = :crypto.strong_rand_bytes(10 * 1024 * 1024)
 
     Kino.Proxy.listen(fn conn ->
-      {:ok, conn} = conn |> send_chunked(200) |> chunk(chunk)
+      conn = send_chunked(conn, 200)
+      assert conn.state == :chunked
+
+      {:ok, _conn} = chunk(conn, chunk)
+      {:ok, _conn} = chunk(conn, other_chunk)
 
       conn
     end)
 
     conn = conn(:get, "/123/proxy/")
-    assert %{resp_body: ^chunk, status: 200} = run_endpoint(conn)
+    assert %{resp_body: body, status: 200} = run_endpoint(conn)
+    assert body == chunk <> other_chunk
   end
 
   test "upgrades with supported http protocol" do
