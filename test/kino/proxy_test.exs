@@ -12,11 +12,10 @@ defmodule Kino.ProxyTest do
       |> send_resp(200, "it works!")
     end)
 
-    conn(:get, "/123/proxy/foo/bar")
-    |> put_req_header("x-auth-token", "foo-bar")
-    |> run_endpoint()
-
-    assert_receive {_ref, {200, _headers, "it works!"}}
+    assert %{resp_body: "it works!", status: 200} =
+             conn(:get, "/123/proxy/foo/bar")
+             |> put_req_header("x-auth-token", "foo-bar")
+             |> run_endpoint()
   end
 
   test "returns the peer data" do
@@ -31,9 +30,7 @@ defmodule Kino.ProxyTest do
     end)
 
     conn = conn(:get, "/123/proxy/")
-    run_endpoint(conn)
-
-    assert_receive {_ref, {200, _headers, "it works!"}}
+    assert %{resp_body: "it works!", status: 200} = run_endpoint(conn)
   end
 
   test "returns the http protocol" do
@@ -43,9 +40,7 @@ defmodule Kino.ProxyTest do
     end)
 
     conn = conn(:get, "/123/proxy/")
-    run_endpoint(conn)
-
-    assert_receive {_ref, {200, _headers, "it works!"}}
+    assert %{resp_body: "it works!", status: 200} = run_endpoint(conn)
   end
 
   test "reads the body" do
@@ -78,22 +73,22 @@ defmodule Kino.ProxyTest do
     end)
 
     conn = conn(:get, "/123/proxy/", body)
-    run_endpoint(conn)
 
+    assert %{resp_body: ^body, status: 200} = run_endpoint(conn)
     assert_receive {_ref, {200, _headers, ^body}}
   end
 
   test "sends chunked response" do
+    chunk = :crypto.strong_rand_bytes(10 * 1024 * 1024)
+
     Kino.Proxy.listen(fn conn ->
+      {:ok, conn} = conn |> send_chunked(200) |> chunk(chunk)
+
       conn
-      |> send_chunked(200)
-      |> chunk("ABC")
     end)
 
     conn = conn(:get, "/123/proxy/")
-    run_endpoint(conn)
-
-    assert_receive {_ref, {200, _headers, "it works!"}}
+    assert %{resp_body: ^chunk, status: 200} = run_endpoint(conn)
   end
 
   test "upgrades with supported http protocol" do
