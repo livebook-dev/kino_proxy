@@ -102,6 +102,17 @@ defmodule Kino.ProxyTest do
     assert_receive {_ref, :upgrade, {:"HTTP/2.0", []}}
   end
 
+  test "returns the inform" do
+    Kino.Proxy.listen(fn conn ->
+      conn
+      |> inform!(199)
+      |> send_resp(200, "it works!")
+    end)
+
+    conn = conn(:get, "/123/proxy/")
+    assert %{resp_body: "it works!", status: 200} = run_endpoint(conn)
+  end
+
   defp run_endpoint(conn, opts \\ []) do
     KinoProxy.Endpoint.call(conn, opts)
   end

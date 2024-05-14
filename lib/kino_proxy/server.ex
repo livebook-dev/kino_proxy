@@ -75,6 +75,11 @@ defmodule KinoProxy.Server do
         send(pid, {ref, :ok})
         loop(monitor_ref, conn)
 
+      {:inform, pid, ref, status, headers} ->
+        conn = inform(conn, status, headers)
+        send(pid, {ref, :ok})
+        loop(monitor_ref, conn)
+
       {:DOWN, ^monitor_ref, :process, _pid, reason} ->
         {conn, reason}
     end

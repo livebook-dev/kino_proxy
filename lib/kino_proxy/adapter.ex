@@ -68,6 +68,15 @@ defmodule KinoProxy.Adapter do
     end
   end
 
+  def inform({pid, ref}, status, headers) do
+    send(pid, {:inform, self(), ref, status, headers})
+
+    receive do
+      {^ref, :ok} -> {:ok, {pid, ref}}
+      {:DOWN, ^ref, _, _, reason} -> exit_fun(:inform, 3, reason)
+    end
+  end
+
   def push(_adapter, _path, _headers), do: {:error, :not_supported}
 
   defp exit_fun(fun, arity, reason) do
