@@ -97,7 +97,7 @@ defmodule Kino.ProxyTest do
     assert body == chunk <> other_chunk
   end
 
-  test "upgrades with supported http protocol" do
+  test "fails to upgrade with unsupported http protocol" do
     Kino.Proxy.listen(fn conn ->
       assert_raise ArgumentError, "upgrade to HTTP/2.0 not supported by KinoProxy.Adapter", fn ->
         upgrade_adapter(conn, :"HTTP/2.0", [])
