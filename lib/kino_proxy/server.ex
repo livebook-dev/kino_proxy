@@ -70,18 +70,8 @@ defmodule KinoProxy.Server do
         send(pid, {ref, message})
         loop(monitor_ref, conn)
 
-      {:upgrade, pid, ref, protocol, opts} ->
-        conn = upgrade_adapter(conn, protocol, opts)
-        send(pid, {ref, :ok})
-        loop(monitor_ref, conn)
-
       {:inform, pid, ref, status, headers} ->
         conn = inform(conn, status, headers)
-        send(pid, {ref, :ok})
-        loop(monitor_ref, conn)
-
-      {:send_file, pid, ref, status, headers, file, offset, length} ->
-        conn = send_file(%{conn | resp_headers: headers}, status, file, offset, length)
         send(pid, {ref, :ok})
         loop(monitor_ref, conn)
 

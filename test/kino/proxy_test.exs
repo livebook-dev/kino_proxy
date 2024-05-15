@@ -99,13 +99,13 @@ defmodule Kino.ProxyTest do
 
   test "upgrades with supported http protocol" do
     Kino.Proxy.listen(fn conn ->
-      upgrade_adapter(conn, :"HTTP/2.0", [])
+      assert_raise ArgumentError, "upgrade to HTTP/2.0 not supported by KinoProxy.Adapter", fn ->
+        upgrade_adapter(conn, :"HTTP/2.0", [])
+      end
     end)
 
     conn = conn(:get, "/123/proxy/")
     run_endpoint(conn)
-
-    assert_receive {_ref, :upgrade, {:"HTTP/2.0", []}}
   end
 
   test "returns the inform" do
