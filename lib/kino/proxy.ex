@@ -4,8 +4,8 @@ defmodule Kino.Proxy do
 
   # TODO: Add function docs
   @doc false
-  @spec run(pid(), Plug.Conn.t()) :: {Plug.Conn.t(), atom()}
-  defdelegate run(pid, conn), to: KinoProxy.Server
+  @spec serve(pid(), Plug.Conn.t()) :: {Plug.Conn.t(), atom()}
+  defdelegate serve(pid, conn), to: KinoProxy.Server
 
   # TODO: Add function docs
   @doc false

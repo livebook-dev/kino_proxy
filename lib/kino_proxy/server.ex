@@ -4,35 +4,25 @@ defmodule KinoProxy.Server do
 
   import Plug.Conn
 
-  @path_param_name "proxied_path"
-  @proxy_params ["id", "slug", @path_param_name]
-
-  def run(pid, %Plug.Conn{} = conn) when is_pid(pid) do
+  def serve(pid, %Plug.Conn{} = conn) do
     spawn_pid = GenServer.call(pid, {:request, build_client_conn(conn), self()})
     monitor_ref = Process.monitor(spawn_pid)
 
     loop(monitor_ref, conn)
   end
 
-  defp build_client_conn(%{params: %{@path_param_name => path_info}} = conn) do
-    %{plug_session: session_data} = conn.private
-    request_path = "/" <> Enum.join(path_info, "/")
-    private = %{plug_session: session_data}
-    params = Map.drop(conn.params, @proxy_params)
-
+  defp build_client_conn(conn) do
     %Plug.Conn{
       host: conn.host,
       method: conn.method,
       owner: conn.owner,
-      path_info: path_info,
       port: conn.port,
-      remote_ip: conn.remote_ip || {127, 0, 0, 1},
-      request_path: request_path,
-      query_string: conn.query_string || "",
-      params: params,
+      remote_ip: conn.remote_ip,
+      query_string: conn.query_string,
+      path_info: conn.path_info,
       scheme: conn.scheme,
-      req_headers: conn.req_headers,
-      private: private
+      script_name: conn.script_name,
+      req_headers: conn.req_headers
     }
   end
 

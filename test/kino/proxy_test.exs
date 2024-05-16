@@ -5,7 +5,7 @@ defmodule Kino.ProxyTest do
   test "returns the user-defined response" do
     Kino.Proxy.listen(fn conn ->
       assert get_req_header(conn, "x-auth-token") == ["foo-bar"]
-      assert conn.request_path == "/foo/bar"
+      assert conn.path_info == ["foo", "bar"]
 
       conn
       |> put_resp_header("content-type", "text/plain")
