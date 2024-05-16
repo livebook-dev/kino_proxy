@@ -21,7 +21,7 @@ defmodule KinoProxy.Endpoint do
   plug :fetch_session
   plug :dispatch
 
-  match "/:id/proxy/*path" do
+  match "/:id/proxy/*proxied_path" do
     if pid = GenServer.whereis(Kino.Proxy) do
       {conn, _reason} = Kino.Proxy.run(pid, conn)
       conn

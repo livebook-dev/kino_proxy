@@ -4,29 +4,36 @@ defmodule KinoProxy.Server do
 
   import Plug.Conn
 
-  @proxy_params ["id", "path"]
+  @path_param_name "proxied_path"
+  @proxy_params ["id", "slug", @path_param_name]
 
-  def run(pid, %Plug.Conn{params: %{"path" => path_info}} = conn) when is_pid(pid) do
-    # TODO: We don't want to pass the whole connection
-    # but only certain fields, and then rebuild it on the client
+  def run(pid, %Plug.Conn{} = conn) when is_pid(pid) do
+    spawn_pid = GenServer.call(pid, {:request, build_client_conn(conn), self()})
+    monitor_ref = Process.monitor(spawn_pid)
+
+    loop(monitor_ref, conn)
+  end
+
+  defp build_client_conn(%{params: %{@path_param_name => path_info}} = conn) do
     %{plug_session: session_data} = conn.private
     request_path = "/" <> Enum.join(path_info, "/")
     private = %{plug_session: session_data}
     params = Map.drop(conn.params, @proxy_params)
-    path_params = Map.drop(conn.path_params, @proxy_params)
 
-    conn = %{
-      conn
-      | request_path: request_path,
-        path_info: path_info,
-        params: params,
-        path_params: path_params,
-        private: private
+    %Plug.Conn{
+      host: conn.host,
+      method: conn.method,
+      owner: conn.owner,
+      path_info: path_info,
+      port: conn.port,
+      remote_ip: conn.remote_ip || {127, 0, 0, 1},
+      request_path: request_path,
+      query_string: conn.query_string || "",
+      params: params,
+      scheme: conn.scheme,
+      req_headers: conn.req_headers,
+      private: private
     }
-
-    spawn_pid = GenServer.call(pid, {:request, conn, self()})
-    monitor_ref = Process.monitor(spawn_pid)
-    loop(monitor_ref, conn)
   end
 
   defp loop(monitor_ref, conn) do
