@@ -12,7 +12,8 @@ defmodule KinoProxy.Server do
   end
 
   defp build_client_conn(conn) do
-    %Plug.Conn{
+    %{
+      adapter: nil,
       host: conn.host,
       method: conn.method,
       owner: conn.owner,

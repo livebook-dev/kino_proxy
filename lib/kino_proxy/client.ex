@@ -27,12 +27,12 @@ defmodule KinoProxy.Client do
   end
 
   @impl true
-  def handle_call({:request, conn, pid}, _from, state) do
+  def handle_call({:request, data, pid}, _from, state) do
     pid =
       spawn(fn ->
         Process.link(pid)
         ref = Process.monitor(pid)
-        conn = put_in(conn.adapter, {KinoProxy.Adapter, {pid, ref}})
+        conn = struct!(Plug.Conn, %{data | adapter: {KinoProxy.Adapter, {pid, ref}}})
         state.fun.(conn)
       end)
 
