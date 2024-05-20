@@ -9,14 +9,17 @@ defmodule KinoProxy.Client do
   # by the owner of the HTTP request.
 
   use GenServer
-  @name Kino.Proxy
 
   def start_link(opts \\ []) do
-    GenServer.start_link(__MODULE__, opts, name: @name)
+    GenServer.start_link(__MODULE__, opts)
   end
 
   def listen(fun) when is_function(fun, 1) do
-    GenServer.cast(@name, {:listen, fun})
+    GenServer.cast(partition_name(), {:listen, fun})
+  end
+
+  def get_pid() do
+    GenServer.whereis(partition_name())
   end
 
   # GenServer callbacks
@@ -42,5 +45,9 @@ defmodule KinoProxy.Client do
   @impl true
   def handle_cast({:listen, fun}, state) do
     {:noreply, %{state | fun: fun}}
+  end
+
+  defp partition_name() do
+    {:via, PartitionSupervisor, {KinoProxy.PartitionSupervisor, Kino.Proxy}}
   end
 end
