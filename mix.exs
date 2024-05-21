@@ -19,9 +19,7 @@ defmodule KinoProxy.MixProject do
   end
 
   def application do
-    [
-      mod: {KinoProxy.Application, []}
-    ]
+    []
   end
 
   defp elixirc_paths(:test), do: ["lib", "test/support"]

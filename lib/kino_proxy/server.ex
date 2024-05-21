@@ -4,10 +4,10 @@ defmodule KinoProxy.Server do
 
   import Plug.Conn
 
-  def serve(pid, %Plug.Conn{} = conn) do
-    spawn_pid = GenServer.call(pid, {:request, build_client_conn(conn), self()})
+  def serve(pid, name, %Plug.Conn{} = conn) when is_pid(pid) and is_atom(name) do
+    args = [self(), name, build_client_conn(conn)]
+    {:ok, spawn_pid} = Task.Supervisor.start_child(pid, KinoProxy.Client, :serve, args)
     monitor_ref = Process.monitor(spawn_pid)
-
     loop(monitor_ref, conn)
   end
 

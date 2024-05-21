@@ -1,5 +1,5 @@
 defmodule KinoProxy.Endpoint do
-  use Plug.Router
+  use Plug.Router, copy_opts_to_assign: :test
 
   plug :match
 
@@ -13,8 +13,8 @@ defmodule KinoProxy.Endpoint do
     script_name = [id, "proxy"]
     conn = %{conn | path_info: path_info, script_name: conn.script_name ++ script_name}
 
-    if pid = KinoProxy.Client.get_pid() do
-      {conn, _reason} = Kino.Proxy.serve(pid, conn)
+    if pid = KinoProxy.Client.get_pid(conn.assigns.test, self()) do
+      {conn, _reason} = KinoProxy.Server.serve(pid, conn.assigns.test, conn)
       conn
     else
       json = Jason.encode!(%{error: %{details: "Not Found"}})
